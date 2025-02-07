@@ -56,7 +56,60 @@ router.get("/", UserController.listUsers);
  *       400:
  *        description: Erro ao criar usuário
  */
-router.post("/", validateUser, UserController.createUser);
+router.post("/", UserController.createUser);
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   get:
+ *     summary: Obtém um usuário pelo ID
+ *     description: Retorna os detalhes de um usuário específico com base no ID fornecido.
+ *     tags:
+ *       - users
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID do usuário
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Usuário encontrado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "1"
+ *                 name:
+ *                   type: string
+ *                   example: "John Doe"
+ *                 email:
+ *                   type: string
+ *                   example: "joao@gmail.com"
+ *       404:
+ *         description: Usuário não encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Usuário não encontrado"
+ *       500:
+ *         description: Erro ao buscar usuário
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Erro ao buscar usuário"
+ */
 router.get("/:id", UserController.getUser);
 /**
  * @swagger
