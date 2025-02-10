@@ -43,15 +43,15 @@ module.exports = {
     }
   },
   async updateUser(req, res) {
-    const { id } = req.params;
+    const id = Number(req.params.id);
     const { name, email } = req.body;
 
     if (isNaN(id)) {
-      return res.status(400).json({ message: "ID inválido" });
+      return res.status(415).json({ message: "ID inválido" });
     }
 
     if (!name || !email) {
-      return res.status(400).json({ message: "name e email obrigatórios" });
+      return res.status(406).json({ message: "name e email obrigatórios" });
     }
 
     try {

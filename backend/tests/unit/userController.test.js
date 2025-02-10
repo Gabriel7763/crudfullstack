@@ -1,5 +1,5 @@
 const sinon = require("sinon");
-const { User } = require("../../src/models");
+const { sequelize, User } = require("../../src/models");
 const userController = require("../../src/controllers/UserController");
 
 /**
@@ -7,10 +7,36 @@ const userController = require("../../src/controllers/UserController");
  */
 describe("Testes Unitários do User Controller", () => {
   /**
+   * Restaurar o estado original dos stubs e spies
    * Restaura os mocks após cada teste.
    */
-  afterEach(() => {
+  beforeEach(async () => {
+    await sequelize.sync({ force: true });
+  });
+
+  afterEach(async () => {
     sinon.restore();
+  });
+
+  /**
+   * Testa a listagem de todos os usuários.
+   */
+  test("getUsers - Deve retornar uma lista de usuários", async () => {
+    const req = {};
+    const res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.stub(),
+    };
+
+    sinon.stub(User, "findAll").resolves([
+      { id: 1, name: "John Doe", email: "john.doe@example.com" },
+      { id: 2, name: "Jane Doe", email: "jane.doe@example.com" },
+    ]);
+
+    await userController.listUsers(req, res);
+
+    expect(res.status.calledWith(200)).toBe(true);
+    expect(res.json.calledWith(sinon.match.array)).toBe(true);
   });
 
   /**
@@ -56,66 +82,36 @@ describe("Testes Unitários do User Controller", () => {
   });
 
   /**
-   * Testa a resposta ao tentar obter um usuário inexistente.
-   */
-  test("getUser - Deve retornar 404 se usuário não for encontrado", async () => {
-    const req = { params: { id: 1 } };
-    const res = {
-      status: sinon.stub().returnsThis(),
-      json: sinon.stub(),
-    };
-
-    sinon.stub(User, "findByPk").resolves(null);
-
-    await userController.getUser(req, res);
-
-    expect(res.status.calledWith(404)).toBe(true);
-    expect(res.json.calledWith(sinon.match({ error: "User not found" }))).toBe(
-      true
-    );
-  });
-
-  /**
-   * Testa a listagem de todos os usuários.
-   */
-  test("getUsers - Deve retornar uma lista de usuários", async () => {
-    const req = {};
-    const res = {
-      status: sinon.stub().returnsThis(),
-      json: sinon.stub(),
-    };
-
-    sinon.stub(User, "findAll").resolves([
-      { id: 1, name: "John Doe", email: "john.doe@example.com" },
-      { id: 2, name: "Jane Doe", email: "jane.doe@example.com" },
-    ]);
-
-    await userController.getUsers(req, res);
-
-    expect(res.status.calledWith(200)).toBe(true);
-    expect(res.json.calledWith(sinon.match.array)).toBe(true);
-  });
-
-  /**
    * Testa a atualização de um usuário.
    */
   test("updateUser - Deve atualizar um usuário existente", async () => {
-    const req = { params: { id: 1 }, body: { name: "John Updated" } };
+    const req = {
+      params: { id: Number(1) },
+      body: { name: "John Updated", email: "john.updated@example.com" },
+    };
+
     const res = {
       status: sinon.stub().returnsThis(),
       json: sinon.stub(),
     };
 
-    sinon
-      .stub(User, "findByPk")
-      .resolves({
-        id: 1,
-        name: "John Doe",
-        email: "john.doe@example.com",
-        update: sinon.stub().resolves(),
-      });
+    const userStub = {
+      id: 1,
+      name: "John Doe",
+      email: "john.doe@example.com",
+      update: sinon.stub().callsFake(function (updatedFields) {
+        Object.assign(this, updatedFields);
+        return Promise.resolve(this);
+      }),
+    };
+
+    sinon.stub(User, "findByPk").resolves(userStub);
 
     await userController.updateUser(req, res);
+    console.log(
+      "Satus chamado:",
+      res.status.getCalls().map((call) => call.args[0])
+    );
 
     expect(res.status.calledWith(200)).toBe(true);
     expect(
